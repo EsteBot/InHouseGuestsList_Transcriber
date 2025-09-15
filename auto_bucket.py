@@ -117,7 +117,7 @@ def apply_excel_formatting(ws, guest_data_dict):
         cell.font = bold_font
 
     # Populate guest data (Part 4)
-    for row_idx in range(3, 33):
+    for row_idx in range(3, 34):
         # Column A (Room numbers, starting in row 3)
         room_to_match_col_1 = ws.cell(row=row_idx, column=1).value
         if room_to_match_col_1 in guest_data_dict:
@@ -222,3 +222,4 @@ with middle_col:
 
     else:
         st.info("Awaiting file upload... Once uploaded, your new file will be ready for download below.")
+
