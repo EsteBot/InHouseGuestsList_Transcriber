@@ -88,6 +88,9 @@ def apply_excel_formatting(ws, guest_data_dict):
     
     ws['C1'] = date.today().strftime('%Y-%m-%d')
     ws['C1'].font = bold_font
+
+    ws['D1'] = date.today().strftime('%A').upper()
+    ws['D1'].font = bold_font
     
     headers = ['ROOM', 'GUEST NAME', 'RATE', 'PET', 'INIT', '',
                'ROOM', 'GUEST NAME', 'RATE', 'PET', 'INIT']
