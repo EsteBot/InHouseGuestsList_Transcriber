@@ -169,7 +169,7 @@ with middle_col:
             # Original Excel Cols: [Room (D), Guest Name (G), Rate (P)]
             # New DF Index: [3, 6, 15] - 3 = [0, 3, 12] in the skipped-row DataFrame
 
-            df = df.iloc[:, [3, 4, 7]].copy()
+            df = df.iloc[:, [3, 4, 11]].copy()
             df.columns = ['Room_Raw', 'Guest_Name', 'Rate_Raw']
 
             # Clean and process the columns
