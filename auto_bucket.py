@@ -172,7 +172,7 @@ with middle_col:
             df = df.iloc[:, [4, 5, 12]].copy()
             df.columns = ['Room_Raw', 'Guest_Name', 'Rate_Raw']
 
-            print(df)
+            st.dataframe(df)
 
             # Clean and process the columns
             # 1. Fill any NaN/blank values in 'Room_Raw' with a placeholder string ('0-')
