@@ -176,7 +176,7 @@ with middle_col:
                 uploaded_file,
                 sheet_name='Sheet1',
                 header=None,  # No header row in source data
-                skiprows=15   # Skip the first 15 rows (to start at row 16 / index 15)
+                skiprows=14   # Skip the first 15 rows (to start at row 16 / index 15)
             )
             st.success(f"Successfully read data from **{uploaded_file.name}**.")
 
@@ -191,9 +191,9 @@ with middle_col:
             # New DF Index: [3, 6, 15] - 3 = [0, 3, 12] in the skipped-row DataFrame
 
             # Load ONLY columns D, G, and P straight from the Excel file
-            #df = pd.read_excel(
-            #    uploaded_file, 
-            #   usecols="D,G,P")
+            df = pd.read_excel(
+                uploaded_file, 
+                usecols="D,G,P")
 
             
             df.columns = ['Room_Raw', 'Guest_Name', 'Rate_Raw']
