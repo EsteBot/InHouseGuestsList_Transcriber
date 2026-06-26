@@ -167,8 +167,8 @@ with middle_col:
         
         st.warning("🚨 RAW EXCEL DUMP END 🚨")
 
-    except Exception as e:
-        st.error(f"Error reading raw file: {e}")
+        except Exception as e:
+            st.error(f"Error reading raw file: {e}")
         try:
             # Part 2: READ DATA USING PANDAS (Cleaner alternative to xlrd)
             # We specify the header and start row based on your original logic (start at row 16, index 15)
