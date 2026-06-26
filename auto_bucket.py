@@ -169,7 +169,12 @@ with middle_col:
             # Original Excel Cols: [Room (D), Guest Name (G), Rate (P)]
             # New DF Index: [3, 6, 15] - 3 = [0, 3, 12] in the skipped-row DataFrame
 
-            df = df.iloc[:, [4, 5, 12]].copy()
+            # Load ONLY columns D, G, and P straight from the Excel file
+            df = pd.read_excel(
+                "your_file.xlsx", 
+                skiprows=15, 
+                usecols="D,G,P"
+            )
             df.columns = ['Room_Raw', 'Guest_Name', 'Rate_Raw']
 
             st.dataframe(df)
