@@ -170,35 +170,34 @@ with middle_col:
         except Exception as e:
             st.error(f"Error reading raw file: {e}")
         try:
-            # Part 2: READ DATA USING PANDAS (Cleaner alternative to xlrd)
-            # We specify the header and start row based on your original logic (start at row 16, index 15)
+            # 1. Read the sheet without skipping rows at the Pandas level
+            # This keeps the column indices (3, 6, 15) perfectly stable.
             df = pd.read_excel(
                 uploaded_file,
                 sheet_name='Sheet1',
-                header=None,  # No header row in source data
-                skiprows=14   # Skip the first 15 rows (to start at row 16 / index 15)
+                header=None
             )
             st.success(f"Successfully read data from **{uploaded_file.name}**.")
-
-            # Filter the DataFrame using the 'Total Rooms' stop condition
-            stop_row_index = df[df.iloc[:, 3].astype(str).str.contains('Total Rooms', na=False)].index
+    
+            # 2. Chop off the top noise by slicing rows starting at index 15
+            df = df.iloc[15:].reset_index(drop=True)
+    
+            # 3. Pull exactly the columns you verified in the raw dump
+            df = df.iloc[:, [3, 6, 15]].copy()
+            df.columns = ['Room_Raw', 'Guest_Name', 'Rate_Raw']
+    
+            # 4. Filter out everything after 'Total Rooms'
+            # Since 'Room_Raw' is now our first column, we check index 0
+            stop_row_index = df[df.iloc[:, 0].astype(str).str.contains('Total Rooms', na=False)].index
+            
             if not stop_row_index.empty:
                 df = df.iloc[:stop_row_index[0]]
-
-            # Keep only the essential columns (D, G, P in original Excel -> index 3, 6, 15 in Python)
-            # Note: Since we skipped 15 rows, the columns are now 0, 3, and 12 in the new, smaller DataFrame 'df'
-            # Original Excel Cols: [Room (D), Guest Name (G), Rate (P)]
-            # New DF Index: [3, 6, 15] - 3 = [0, 3, 12] in the skipped-row DataFrame
-
-            # Load ONLY columns D, G, and P straight from the Excel file
-            df = pd.read_excel(
-                uploaded_file, 
-                usecols="D,G,P")
-
-            
-            df.columns = ['Room_Raw', 'Guest_Name', 'Rate_Raw']
-
+    
+            # 5. Display the clean data!
             st.dataframe(df)
+    
+        except Exception as e:
+            st.error(f"An error occurred: {e}")
 
             # Clean and process the columns
             # 1. Fill any NaN/blank values in 'Room_Raw' with a placeholder string ('0-')
