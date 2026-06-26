@@ -149,6 +149,27 @@ with middle_col:
 
     if uploaded_file is not None:
         try:
+        # 1. Read absolutely EVERYTHING with zero assumptions
+        raw_df = pd.read_excel(
+            uploaded_file,
+            sheet_name='Sheet1',
+            header=None,
+            dtype=str # Treats everything as text so nothing gets dropped/converted
+        )
+        
+        st.warning("🚨 RAW EXCEL DUMP START 🚨")
+        
+        # 2. Print a quick shape summary
+        st.write(f"Total Rows found: {raw_df.shape[0]} | Total Columns found: {raw_df.shape[1]}")
+        
+        # 3. Render the full dataframe with original 0, 1, 2 column headers
+        st.dataframe(raw_df)
+        
+        st.warning("🚨 RAW EXCEL DUMP END 🚨")
+
+    except Exception as e:
+        st.error(f"Error reading raw file: {e}")
+        try:
             # Part 2: READ DATA USING PANDAS (Cleaner alternative to xlrd)
             # We specify the header and start row based on your original logic (start at row 16, index 15)
             df = pd.read_excel(
@@ -170,10 +191,11 @@ with middle_col:
             # New DF Index: [3, 6, 15] - 3 = [0, 3, 12] in the skipped-row DataFrame
 
             # Load ONLY columns D, G, and P straight from the Excel file
-            df = pd.read_excel(
-                uploaded_file, 
-                usecols="D,G,P"
-            )
+            #df = pd.read_excel(
+            #    uploaded_file, 
+            #   usecols="D,G,P")
+
+            
             df.columns = ['Room_Raw', 'Guest_Name', 'Rate_Raw']
 
             st.dataframe(df)
