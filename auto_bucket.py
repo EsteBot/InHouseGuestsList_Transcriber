@@ -171,8 +171,7 @@ with middle_col:
 
             # Load ONLY columns D, G, and P straight from the Excel file
             df = pd.read_excel(
-                "your_file.xlsx", 
-                skiprows=15, 
+                uploaded_file, 
                 usecols="D,G,P"
             )
             df.columns = ['Room_Raw', 'Guest_Name', 'Rate_Raw']
