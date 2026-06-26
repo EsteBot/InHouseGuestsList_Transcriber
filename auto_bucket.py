@@ -169,8 +169,10 @@ with middle_col:
             # Original Excel Cols: [Room (D), Guest Name (G), Rate (P)]
             # New DF Index: [3, 6, 15] - 3 = [0, 3, 12] in the skipped-row DataFrame
 
-            df = df.iloc[:, [3, 4, 11]].copy()
+            df = df.iloc[:, [4, 5, 12]].copy()
             df.columns = ['Room_Raw', 'Guest_Name', 'Rate_Raw']
+
+            print(df)
 
             # Clean and process the columns
             # 1. Fill any NaN/blank values in 'Room_Raw' with a placeholder string ('0-')
