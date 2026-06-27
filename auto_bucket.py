@@ -143,78 +143,74 @@ with middle_col:
     st.write('')
     st.markdown("Upload your **'In_House_Guests.xls'** file to generate the final, formatted guest list as a new `.xlsx` file.")
     st.markdown("This eliminates the need for manual pen & paper transcription!")
+    
     # Part 1: STREAMLIT FILE UPLOAD
-    uploaded_file = st.file_uploader("",type=['xls', 'xlsx'] # Streamlit and Pandas can handle both
-    )
-
-    if uploaded_file is not None:
-        try:
-            # 1. Read absolutely EVERYTHING with zero assumptions
-            raw_df = pd.read_excel(
-                uploaded_file,
-                sheet_name='Sheet1',
-                header=None,
-                dtype=str # Treats everything as text so nothing gets dropped/converted
-            )
-            
-            st.warning("🚨 RAW EXCEL DUMP START 🚨")
-            
-            # 2. Print a quick shape summary
-            st.write(f"Total Rows found: {raw_df.shape[0]} | Total Columns found: {raw_df.shape[1]}")
-            
-            # 3. Render the full dataframe with original 0, 1, 2 column headers
-            st.dataframe(raw_df)
-            
-            st.warning("🚨 RAW EXCEL DUMP END 🚨")
-
-        except Exception as e:
-            st.error(f"Error reading raw file: {e}")
-            
+    uploaded_file = st.file_uploader("", type=['xls', 'xlsx'])
+    
+    # ==========================================
+    # BLOCK A: THE RAW DEBUG DUMP (Admin Only)
+    # ==========================================
+    if "debug" in st.query_params and st.query_params["debug"] == "true":
         if uploaded_file is not None:
             try:
-                # 1. Read everything as strings to prevent Pandas from making assumptions
+                # Read absolutely EVERYTHING with zero assumptions
                 raw_df = pd.read_excel(uploaded_file, sheet_name='Sheet1', header=None, dtype=str)
-                st.success(f"Successfully read data from **{uploaded_file.name}**.")
-        
-                header_row_idx = None
-                room_col_idx = None
-                guest_col_idx = None
-                rate_col_idx = None
-        
-                # 2. DYNAMICALLY LOCATE THE EXACT HEADERS
-                # Scan the first 30 rows for the exact text matches
-                for idx, row in raw_df.head(30).iterrows():
-                    # Clean up whitespace but keep case sensitive / exact matching
-                    row_values = [str(val).strip() for val in row.values]
-                    
-                    if 'Room' in row_values and 'Guest Name' in row_values and 'Rate' in row_values:
-                        header_row_idx = idx
-                        room_col_idx = row_values.index('Room')
-                        guest_col_idx = row_values.index('Guest Name')
-                        rate_col_idx = row_values.index('Rate')
-                        break
-        
-                # Safety Check: If the exact headers weren't found, stop execution gracefully
-                if header_row_idx is None:
-                    st.error("❌ Structure mismatch: Could not find a row containing the exact headers: 'Room', 'Guest Name', and 'Rate'.")
-                    st.stop()
-        
-                # 3. SLICE THE DATAFRAME USING THE DISCOVERED INDICES
-                # Start extracting data from the row immediately *after* the header row
-                df = raw_df.iloc[header_row_idx + 1:].reset_index(drop=True)
                 
-                # Pull only the exact matching columns we just found
-                df = df.iloc[:, [room_col_idx, guest_col_idx, rate_col_idx]].copy()
-                df.columns = ['Room_Raw', 'Guest_Name', 'Rate_Raw']
-        
-                # 4. Filter out everything after 'Total Rooms'
-                stop_row_index = df[df.iloc[:, 0].astype(str).str.contains('Total Rooms', na=False)].index
-                if not stop_row_index.empty:
-                    df = df.iloc[:stop_row_index[0]]
-        
-                # Toast our success in the Streamlit UI
+                st.warning("🚨 RAW EXCEL DUMP START 🚨")
+                st.write(f"Total Rows found: {raw_df.shape[0]} | Total Columns found: {raw_df.shape[1]}")
+                st.dataframe(raw_df)
+                st.warning("🚨 RAW EXCEL DUMP END 🚨")
+            except Exception as e:
+                st.error(f"Error reading raw file: {e}")
+                
+    # ==========================================
+    # BLOCK B: MAIN PROCESSING LOGIC (For Everyone!)
+    # ==========================================
+    # Shifted left so it runs INDEPENDENTLY of the debug URL parameter check!
+    if uploaded_file is not None:
+        try:
+            # 1. Read everything as strings to prevent Pandas from making assumptions
+            raw_df = pd.read_excel(uploaded_file, sheet_name='Sheet1', header=None, dtype=str)
+            st.success(f"Successfully read data from **{uploaded_file.name}**.")
+    
+            header_row_idx = None
+            room_col_idx = None
+            guest_col_idx = None
+            rate_col_idx = None
+    
+            # 2. DYNAMICALLY LOCATE THE EXACT HEADERS
+            for idx, row in raw_df.head(30).iterrows():
+                row_values = [str(val).strip() for val in row.values]
+                
+                if 'Room' in row_values and 'Guest Name' in row_values and 'Rate' in row_values:
+                    header_row_idx = idx
+                    room_col_idx = row_values.index('Room')
+                    guest_col_idx = row_values.index('Guest Name')
+                    rate_col_idx = row_values.index('Rate')
+                    break
+    
+            # Safety Check
+            if header_row_idx is None:
+                st.error("❌ Structure mismatch: Could not find a row containing the exact headers: 'Room', 'Guest Name', and 'Rate'.")
+                st.stop()
+    
+            # 3. SLICE THE DATAFRAME
+            df = raw_df.iloc[header_row_idx + 1:].reset_index(drop=True)
+            df = df.iloc[:, [room_col_idx, guest_col_idx, rate_col_idx]].copy()
+            df.columns = ['Room_Raw', 'Guest_Name', 'Rate_Raw']
+    
+            # 4. Filter out everything after 'Total Rooms'
+            stop_row_index = df[df.iloc[:, 0].astype(str).str.contains('Total Rooms', na=False)].index
+            if not stop_row_index.empty:
+                df = df.iloc[:stop_row_index[0]]
+                
+            # Hiding the secondary sliced dataframe check behind the debug URL parameter too!
+            if "debug" in st.query_params and st.query_params["debug"] == "true":
                 st.write(f"🎯 Found headers on row {header_row_idx + 1}! Mapping -> Room: Col {room_col_idx}, Guest: Col {guest_col_idx}, Rate: Col {rate_col_idx}")
                 st.dataframe(df)
+            
+        except Exception as e:
+            st.error(f"Processing error: {e}")
                 
                 # === DATA CLEANING AND PROCESSING (Now safely inside the try block!) ===
                 
