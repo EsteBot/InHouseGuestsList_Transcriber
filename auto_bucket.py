@@ -208,62 +208,59 @@ with middle_col:
             if "debug" in st.query_params and st.query_params["debug"] == "true":
                 st.write(f"🎯 Found headers on row {header_row_idx + 1}! Mapping -> Room: Col {room_col_idx}, Guest: Col {guest_col_idx}, Rate: Col {rate_col_idx}")
                 st.dataframe(df)
-            
-        except Exception as e:
-            st.error(f"Processing error: {e}")
                 
-        # === DATA CLEANING AND PROCESSING (Now safely inside the try block!) ===
-        
-        # Fill any NaN/blank values in 'Room_Raw' with a placeholder string ('0-')
-        df['Room_Raw'] = df['Room_Raw'].fillna('0-').astype(str)
+            # === DATA CLEANING AND PROCESSING (Now safely inside the try block!) ===
+            
+            # Fill any NaN/blank values in 'Room_Raw' with a placeholder string ('0-')
+            df['Room_Raw'] = df['Room_Raw'].fillna('0-').astype(str)
+    
+            # Extract the room number (before the dash)
+            df['Room_Number'] = df['Room_Raw'].str.split('-').str[0]
+    
+            # Convert to integer
+            df['Room_Number'] = df['Room_Number'].astype(int)
+    
+            # Remove any placeholder rows added where Room_Number is 0
+            df.drop(df[df['Room_Number'] == 0].index, inplace=True)
+            
+            # Clean the Rate column: remove '$' and convert to float
+            df['Rate'] = df['Rate_Raw'].astype(str).str.strip('$').replace('', '0.0').astype(float)
+            df.dropna(subset=['Room_Number'], inplace=True) 
+    
+            # Build the dictionary
+            guest_data_dict = df.set_index('Room_Number')[['Guest_Name', 'Rate']].to_dict('index')
+            st.info(f"Loaded **{len(guest_data_dict)}** guest records.")
+    
+            # CREATE AND POPULATE NEW WORKBOOK
+            new_wb = Workbook()
+            new_ws = new_wb.active
+            new_ws.page_setup.orientation = new_ws.ORIENTATION_LANDSCAPE
+            new_ws = apply_excel_formatting(new_ws, guest_data_dict)
+    
+            # PREPARE AND SAVE THE FINAL WORKBOOK (for download)
+            output = BytesIO()
+            new_wb.save(output)
+            processed_data = output.getvalue()
+            final_file_name = f"In House Guest List {date.today().strftime('%Y%m%d')}.xlsx"
+    
+            if st.download_button(
+                label="Download Final Guest List (.xlsx)",
+                data=processed_data,
+                file_name=final_file_name,
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                help="Click to download the newly created and formatted guest list file."
+            ):
+                st.snow()  # Let it snow!
+                st.write("<span style='color: rgb(0, 191, 255);'>That's 🥶 COOL baby 🍼! </span>", unsafe_allow_html=True)
+            else:
+                st.balloons()  # Show balloons when the file is first loaded
 
-        # Extract the room number (before the dash)
-        df['Room_Number'] = df['Room_Raw'].str.split('-').str[0]
-
-        # Convert to integer
-        df['Room_Number'] = df['Room_Number'].astype(int)
-
-        # Remove any placeholder rows added where Room_Number is 0
-        df.drop(df[df['Room_Number'] == 0].index, inplace=True)
-        
-        # Clean the Rate column: remove '$' and convert to float
-        df['Rate'] = df['Rate_Raw'].astype(str).str.strip('$').replace('', '0.0').astype(float)
-        df.dropna(subset=['Room_Number'], inplace=True) 
-
-        # Build the dictionary
-        guest_data_dict = df.set_index('Room_Number')[['Guest_Name', 'Rate']].to_dict('index')
-        st.info(f"Loaded **{len(guest_data_dict)}** guest records.")
-
-        # CREATE AND POPULATE NEW WORKBOOK
-        new_wb = Workbook()
-        new_ws = new_wb.active
-        new_ws.page_setup.orientation = new_ws.ORIENTATION_LANDSCAPE
-        new_ws = apply_excel_formatting(new_ws, guest_data_dict)
-
-        # PREPARE AND SAVE THE FINAL WORKBOOK (for download)
-        output = BytesIO()
-        new_wb.save(output)
-        processed_data = output.getvalue()
-        final_file_name = f"In House Guest List {date.today().strftime('%Y%m%d')}.xlsx"
-
-        if st.download_button(
-            label="Download Final Guest List (.xlsx)",
-            data=processed_data,
-            file_name=final_file_name,
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            help="Click to download the newly created and formatted guest list file."
-        ):
-            st.snow()  # Let it snow!
-            st.write("<span style='color: rgb(0, 191, 255);'>That's 🥶 COOL baby 🍼! </span>", unsafe_allow_html=True)
-        else:
-            st.balloons()  # Show balloons when the file is first loaded
-
-    except KeyError as e:
-        st.error(f"Error: Could not find the expected data. Please check 'Sheet1' structure: {e}")
-    except ValueError as e:
-        st.error(f"Error: Data conversion failed. Check if Room Numbers or Rates are valid. Details: {e}")
-    except Exception as e:
-        st.error(f"An unexpected error occurred during processing: {e}")
+        except KeyError as e:
+            st.error(f"Error: Could not find the expected data. Please check 'Sheet1' structure: {e}")
+        except ValueError as e:
+            st.error(f"Error: Data conversion failed. Check if Room Numbers or Rates are valid. Details: {e}")
+        except Exception as e:
+            st.error(f"An unexpected error occurred during processing: {e}")
 
 else:
     st.info("Awaiting file upload... Once uploaded, your new file will be ready for download below.")
