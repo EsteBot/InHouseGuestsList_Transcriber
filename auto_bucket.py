@@ -262,6 +262,6 @@ with middle_col:
         except Exception as e:
             st.error(f"An unexpected error occurred during processing: {e}")
 
-else:
-    st.info("Awaiting file upload... Once uploaded, your new file will be ready for download below.")
+    else:
+        st.info("Awaiting file upload... Once uploaded, your new file will be ready for download below.")
 
